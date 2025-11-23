@@ -1,3 +1,4 @@
+import os
 import mlflow
 import mlflow.sklearn
 import pandas as pd
@@ -5,8 +6,12 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import precision_score, recall_score, f1_score
 
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
+os.environ["MLFLOW_TRACKING_USERNAME"] = "claramarsya"
+os.environ["MLFLOW_TRACKING_PASSWORD"] = "db03a6bb43195570a02d704d72f14dcb8c97871d"
+
+mlflow.set_tracking_uri("https://dagshub.com/claramarsya/Membangun_model.mlflow")
 
 # Load Dataset
 DATA_PATH = "FakeNewsNet_preprocessing.csv"
@@ -61,7 +66,11 @@ with mlflow.start_run(run_name="LogReg_FakeNews_Tuning"):
 
     # Prediksi
     y_pred = best_model.predict(X_test)
+
     acc = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
 
     print("\n========================")
     print("Best Params :", grid.best_params_)
@@ -75,10 +84,14 @@ with mlflow.start_run(run_name="LogReg_FakeNews_Tuning"):
     mlflow.log_param("penalty", grid.best_params_["penalty"])
     mlflow.log_metric("test_accuracy", acc)
     mlflow.log_metric("cv_best_score", grid.best_score_)
+    mlflow.log_metric("precision", precision)
+    mlflow.log_metric("recall", recall)
+    mlflow.log_metric("f1_score", f1)
 
     # Simpan model
     mlflow.sklearn.log_model(best_model, "best_model")
-
+    # Simpan TF-IDF Vectorizer
+    mlflow.sklearn.log_model(tfidf, "tfidf_vectorizer")
 
 print("\nModel tuning selesai dicatat di MLflow.")
 print("Untuk membuka MLflow UI:")
